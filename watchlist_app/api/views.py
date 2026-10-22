@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from rest_framework import viewsets
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
+from rest_framework.exceptions import ValidationError
 
 
 class WatchListAV(APIView):
@@ -53,8 +54,8 @@ class WatchDetailAV(APIView):
 # platform views 
 
 class StreamPlatformVS(viewsets.ModelViewSet):
-    queryset = StreamPlatform.objects.all()
-    serializer_class = PlatformSerializer
+    queryset = StreamPlatform.objects.all() 
+    serializer_class = PlatformSerializer 
 
 # class StreamPlatformVS(viewsets.ViewSet):
 #      def list(self, request):
@@ -123,4 +124,11 @@ class ReviewCreateAV(generics.CreateAPIView):
     def perform_create(self, serializer):
         pk = self.kwargs.get('pk')
         movie = WatchList.objects.get(pk=pk)
-        serializer.save(watchlist=movie)
+        
+        user = self.request.user
+        review_queryset = Review.objects.filter(watchlist=movie,review_user=user)
+        
+        if review_queryset.exists():
+             raise ValidationError('You have already reviewd this content')
+        
+        serializer.save(watchlist=movie, review_user = user)

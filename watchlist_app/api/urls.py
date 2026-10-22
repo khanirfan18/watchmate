@@ -10,7 +10,7 @@ urlpatterns = [
     
     # watch is default first param
     path('',WatchListAV.as_view(), name='movies-list'),
-    path('<int:pk>',WatchDetailAV.as_view(), name='movie-detail'),
+    path('<int:pk>/',WatchDetailAV.as_view(), name='movie-detail'),
     
     #platforms 
     path('', include(router.urls)),
