@@ -6,8 +6,12 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from django.shortcuts import get_object_or_404
+
+from watchlist_app.api.permissions import AdminOrReadOnly,ReviewUserOrReadOnly
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
+
+from rest_framework.permissions import IsAuthenticated,IsAuthenticatedOrReadOnly
 
 
 class WatchListAV(APIView):
@@ -102,33 +106,53 @@ class StreamPlatformVS(viewsets.ModelViewSet):
 # Review views
 
 class ReviewListAV(generics.ListAPIView):
-    queryset = Review.objects.all()
-    serializer_class = ReviewSerializer
-     
-    def get_queryset(self):
-         pk = self.kwargs['pk']
-         return Review.objects.filter(watchlist=pk)
-     
+     queryset = Review.objects.all()
+     serializer_class = ReviewSerializer
+     permission_classes = [IsAuthenticated]
+          
+     def get_queryset(self):
+          pk = self.kwargs['pk']
+          return Review.objects.filter(watchlist=pk)
+          
 
 
 class ReviewDetailAV(generics.RetrieveUpdateDestroyAPIView): 
-     
      queryset = Review.objects.all()
      serializer_class = ReviewSerializer
+     permission_classes = [ReviewUserOrReadOnly]
+     
+     
      
 
 class ReviewCreateAV(generics.CreateAPIView):
-    queryset = Review.objects.all()
-    serializer_class = ReviewSerializer
-    
-    def perform_create(self, serializer):
-        pk = self.kwargs.get('pk')
-        movie = WatchList.objects.get(pk=pk)
-        
-        user = self.request.user
-        review_queryset = Review.objects.filter(watchlist=movie,review_user=user)
-        
-        if review_queryset.exists():
-             raise ValidationError('You have already reviewd this content')
-        
-        serializer.save(watchlist=movie, review_user = user)
+
+     queryset = Review.objects.all()
+     serializer_class = ReviewSerializer
+     
+     def perform_create(self, serializer):
+          pk = self.kwargs.get('pk')
+          movie = WatchList.objects.get(pk=pk)
+          user = self.request.user
+
+          review_queryset = Review.objects.filter(
+               watchlist=movie,
+               review_user=user
+          )
+
+          if review_queryset.exists():
+               raise ValidationError(
+                    'You have already reviewed this content'
+               )
+
+          new_rating = serializer.validated_data['rating']
+          old_count = movie.number_rating
+
+          movie.avg_rating = (
+               (movie.avg_rating * old_count + new_rating)
+               / (old_count + 1)
+          )
+          movie.number_rating = old_count + 1
+
+          movie.save()
+
+          serializer.save(watchlist=movie, review_user=user)
