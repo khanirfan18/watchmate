@@ -19,7 +19,7 @@ urlpatterns = [
     
     
     #Reviews 
-    path('<int:pk>/review/',ReviewListAV.as_view(),name='all reviews'),
+    path('<int:pk>/reviews/',ReviewListAV.as_view(),name='all reviews'),
     path('<int:pk>/review-create/', ReviewCreateAV.as_view(), name='review-create'),
     path('review/<int:pk>/',ReviewDetailAV.as_view(), name='review detail'),
 ]
