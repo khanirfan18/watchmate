@@ -14,6 +14,14 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated,IsAuthenticatedOrReadOnly
 
 
+#throttling 
+# from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
+from watchlist_app.api.throttling import ReviewCreateThrottle, ReviewListThrottle
+
+
+
+
+
 
 class WatchListAV(APIView):
      permission_classes = [IsAdminOrReadOnly]
@@ -31,6 +39,8 @@ class WatchListAV(APIView):
                return Response(serializer.data)
           else:
                return Response(serializer.errors)
+   
+   
           
 class WatchDetailAV(APIView):
      permission_classes = [IsAdminOrReadOnly]
@@ -114,7 +124,8 @@ class StreamPlatformVS(viewsets.ModelViewSet):
 
 class ReviewListAV(generics.ListAPIView):
      permission_classes = [IsAuthenticated]
-     
+     throttle_classes = [ReviewListThrottle]
+
      queryset = Review.objects.all()
      serializer_class = ReviewSerializer
 
@@ -135,6 +146,7 @@ class ReviewDetailAV(generics.RetrieveUpdateDestroyAPIView):
      
 
 class ReviewCreateAV(generics.CreateAPIView):
+     throttle_classes = [ReviewCreateThrottle]
      permission_classes = [IsAuthenticated]
      queryset = Review.objects.all()
      serializer_class = ReviewSerializer
