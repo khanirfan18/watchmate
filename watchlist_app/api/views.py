@@ -121,15 +121,28 @@ class StreamPlatformVS(viewsets.ModelViewSet):
           
 
 # class StreamPlatformDetailAV(APIView):
+#      permission_classes = [IsAdminOrReadOnly]
+#      # throttle_class = [AnonRateThrottle]
+     
 #      def get(self,request,pk):
-#           platform = StreamPlatform.objects.get(pk=pk)
-#           serializer = PlatformSerializer(platform)
+#           try:
+#                platform = StreamPlatform.objects.get(pk=pk)
+#           except StreamPlatform.DoesNotExist:
+#                return Response({'error': 'Not Found'}, status=status.HTTP_404_NOT_FOUND)
+          
+#           serializer = PlatformSerializer(platform, context={'request':request})
 #           return Response(serializer.data)
+     
      
 #      def put(self,request,pk=None): 
 #           platform = StreamPlatform.objects.get(pk=pk)
 #           serializer = PlatformSerializer(platform,data=request.data)
-#           return Response(serializer.data) 
+#           if serializer.is_valid():
+#                serializer.save()
+#                return Response(serializer.data) 
+#           else:
+#                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+     
      
 #      def delete(self,request,pk):
 #           platform = StreamPlatform.objects.get(pk=pk)
@@ -200,3 +213,18 @@ class ReviewCreateAV(generics.CreateAPIView):
           movie.save()
 
           serializer.save(watchlist=movie, review_user=user)
+          
+
+class UserReview(generics.ListAPIView):
+     # permission_classes = [IsAuthenticated]
+     # throttle_classes = [ReviewListThrottle]
+
+     # queryset = Review.objects.all()
+     serializer_class = ReviewSerializer
+     # filter_backends = [DjangoFilterBackend]
+     # filterset_fields = ['review_user__username', 'active']
+          
+     def get_queryset(self):
+          username = self.request.query_params.get('username', None)
+          return Review.objects.filter(review_user__username=username)
+          
